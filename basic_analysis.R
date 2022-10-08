@@ -42,7 +42,18 @@ final_data <-
                                        serve_outcome == 4 ~ 0.364,
                                        TRUE ~ 0)
   )
-  
+
+## Create a plot of avg_prob of scoring a point agaisnt serve_speed for a player
+serve_point_score_analysis <- 
+  final_data %>%
+  filter(server == 2) %>% 
+  group_by(serve_speed) %>% 
+  summarize(avg_prob = mean(point_probability)) %>% 
+  ggplot(aes(x = serve_speed, y = avg_prob)) +
+  geom_point() +
+  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
+
+serve_point_score_analysis
 
 
 # Pass-Score Analysis:
