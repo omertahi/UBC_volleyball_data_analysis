@@ -43,7 +43,7 @@ final_data <-
                                        TRUE ~ 0)
   )
 
-## Create a plot of avg_prob of scoring a point agaisnt serve_speed for a player
+## Create a plot of avg_prob of scoring a point against serve_speed for a player
 serve_point_score_analysis <- 
   final_data %>%
   filter(server == 2) %>% 
