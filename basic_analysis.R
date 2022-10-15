@@ -1,23 +1,28 @@
 library(tidyverse)
 library(readxl)
+`%notin%` <- Negate(`%in%`)
 
-## Read data
+# read data ------------------------------------------------------------------#
 volleyball_data <- read_excel("SAMPLE DATA BAD.xlsx")
+#-----------------------------------------------------------------------------#
 
-## Combine cut-spin and spin as spin in the serve_type column
+## Combine cut-spin and spin as spin in the serve_type column ----------------#
 data <- 
   volleyball_data %>% 
   mutate(serve_type = replace(volleyball_data$serve_type,
                               volleyball_data$serve_type == "cut_spin",
                               "spin"),
          server = as.numeric(server)) %>% 
-  filter(!is.na(server))
+  filter(!is.na(server),
+         server %notin% c(0, 4, 99))
+#-----------------------------------------------------------------------------#
 
 ## Check counts of each serve_type
 count_serve_type <- 
   data %>% 
   group_by(serve_type) %>% 
   summarize(counts = n())
+#-----------------------------------------------------------------------------#
 
 ## Check main serve type for each server
 main_serve_type <- 
@@ -26,6 +31,7 @@ main_serve_type <-
   summarise(n = n()) %>% 
   group_by(server) %>% 
   slice_max(order_by = n)
+#-----------------------------------------------------------------------------#
 
 
 ## Semi-join data with main_serve_type_for_player to get corresponding complete data rows
@@ -33,6 +39,7 @@ main_serve_type_data <-
   data %>% 
   semi_join(main_serve_type,
             by = c("server", "serve_type"))
+#-----------------------------------------------------------------------------#
 
 ## Create new column to assign probabilities for each serve outcome
 point_prob_data <- 
@@ -44,12 +51,14 @@ point_prob_data <-
                                        serve_outcome == 4 ~ 0.366,
                                        TRUE ~ 0)
   )
+#-----------------------------------------------------------------------------#
 
 avg_point_prob_data <- 
   point_prob_data %>%
   group_by(server, serve_speed) %>% 
   summarize(avg_prob = mean(point_probability)) %>% 
   arrange(server)
+#-----------------------------------------------------------------------------#
 
 gaussian <- 
   avg_point_prob_data %>%
@@ -62,7 +71,38 @@ gaussian <-
   pivot_wider(names_from = server,
               values_from = gaussian) %>% 
   unnest()
+#-----------------------------------------------------------------------------#
+
+
+top2_serve_velocity <- 
+  gaussian %>% 
+  t() %>% 
+  as.data.frame() %>% 
+  rownames_to_column(var = "server") %>% 
+  unnest(cols = c("V1", "V2")) %>% 
+  mutate(server = as.factor(server),
+         serve_velocity = V1,
+         point_prob = V2) %>% 
+  select(-V1, -V2) %>% 
+  group_by(server) %>% 
+  slice_max(order_by = point_prob, n = 2)
+#-----------------------------------------------------------------------------#
   
+optimal_serve_velocity <- 
+  top2_serve_velocity %>% 
+  slice(seq(1, nrow(.), 2))
+#-----------------------------------------------------------------------------#
+
+second_serve_velocity <- 
+  top2_serve_velocity %>% 
+  slice(seq(2, nrow(.), 2))
+
+
+optimal_serve_velocity_table <- 
+  left_join(optimal_serve_velocity,
+            second_serve_velocity,
+            by = "server")
+
 
 ## Create a plot of avg_prob of scoring a point against serve_speed for a player
 ### SERVER 0
@@ -75,7 +115,7 @@ server_0_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_0_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 1
 server_1_analysis <- 
@@ -87,7 +127,7 @@ server_1_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_1_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 2
 server_2_analysis <- 
@@ -99,7 +139,7 @@ server_2_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_2_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 3
 server_3_analysis <- 
@@ -111,7 +151,7 @@ server_3_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_3_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 4
 server_4_analysis <- 
@@ -123,7 +163,7 @@ server_4_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_4_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 5
 server_5_analysis <- 
@@ -135,7 +175,7 @@ server_5_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_5_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 7
 server_7_analysis <- 
@@ -147,7 +187,7 @@ server_7_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_7_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 8
 server_8_analysis <- 
@@ -159,7 +199,7 @@ server_8_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_8_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 9
 server_9_analysis <- 
@@ -171,7 +211,7 @@ server_9_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_9_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 10
 server_10_analysis <- 
@@ -183,7 +223,7 @@ server_10_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_10_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 11
 server_11_analysis <- 
@@ -195,7 +235,7 @@ server_11_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_11_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 12
 server_12_analysis <- 
@@ -207,7 +247,7 @@ server_12_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_12_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 13
 server_13_analysis <- 
@@ -219,7 +259,7 @@ server_13_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_13_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 14
 server_14_analysis <- 
@@ -231,7 +271,7 @@ server_14_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_14_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 15
 server_15_analysis <- 
@@ -243,7 +283,7 @@ server_15_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_15_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 16
 server_16_analysis <- 
@@ -255,7 +295,7 @@ server_16_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_16_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 18
 server_18_analysis <- 
@@ -267,7 +307,7 @@ server_18_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_18_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 ### SERVER 20
 server_20_analysis <- 
@@ -279,7 +319,7 @@ server_20_analysis <-
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_20_analysis
-##################
+#-----------------------------------------------------------------------------#
 
 # pass.score.med <- mean.all %>%
 #   ggplot(aes(x = velocity, y = prob, color=type)) +
