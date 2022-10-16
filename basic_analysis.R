@@ -1,5 +1,6 @@
 library(tidyverse)
 library(readxl)
+library(gridExtra)
 `%notin%` <- Negate(`%in%`)
 
 # read data ------------------------------------------------------------------#
@@ -96,12 +97,30 @@ optimal_serve_velocity <-
 second_serve_velocity <- 
   top2_serve_velocity %>% 
   slice(seq(2, nrow(.), 2))
+#-----------------------------------------------------------------------------#
 
+plus_minus_2 <- function(x) {
+  return(paste0("[", x-2, ", ", x+2, "]"))
+}
 
 optimal_serve_velocity_table <- 
   left_join(optimal_serve_velocity,
             second_serve_velocity,
-            by = "server")
+            by = "server") %>% 
+  mutate(optimal_serve_velocity = round(serve_velocity.x, 0),
+         second_optimal_serve_velocity = round(serve_velocity.y, 0),
+         optimal_point_prob = round(point_prob.x, 3),
+         second_optimal_point_prob = round(point_prob.y, 3),
+         optimal_velocity_range = sapply(optimal_serve_velocity, plus_minus_2),
+         second_optimal_velocity_range = sapply(second_optimal_serve_velocity, plus_minus_2)) %>% 
+  select(1, 6, 8, 10, 7, 9, 11)
+#-----------------------------------------------------------------------------#  
+
+png("volleyball_data.png",
+    height = 50*nrow(optimal_serve_velocity_table),
+    width = 200*ncol(optimal_serve_velocity_table))
+grid.table(optimal_serve_velocity_table)
+dev.off()
 
 
 ## Create a plot of avg_prob of scoring a point against serve_speed for a player
