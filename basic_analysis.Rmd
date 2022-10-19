@@ -9,7 +9,6 @@ knitr::opts_chunk$set(warning = FALSE)
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-
 ## R Markdown
 
 ```{r basic_analysis}
@@ -154,4 +153,26 @@ optimal_serve_velocity_table <-
          optimal_velocity_range = sapply(optimal_serve_velocity, plus_minus_2),
          second_optimal_velocity_range = sapply(second_optimal_serve_velocity, plus_minus_2)) %>% 
   select(1, 6, 8, 10, 7, 9, 11)
+#-----------------------------------------------------------------------------#
+```
+
+```{r plot, fig.width=12, fig.height=50}
+# Create a plots of avg point prob vs serve_speed for each player ------------#
+## SERVER 1
+plot_data <- 
+  ksmooth_values %>% 
+  pivot_longer(cols = c(point_prob, error_perc, ace_perc),
+               names_to = "type",
+               values_to = "percentage")
+
+main_plot <- 
+  plot_data %>%
+  ggplot(aes(x = serve_velocity)) +
+  geom_line(aes(y = percentage, color = type)) +
+  facet_wrap(vars(server), ncol = 1, scales = "free") +
+  labs(x = "Serve Speed (km/h)", y = "") +
+  theme_bw()
+
+main_plot
+#-----------------------------------------------------------------------------#
 ```
