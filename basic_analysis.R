@@ -28,11 +28,12 @@ count_serve_type <-
   summarize(counts = n())
 #-----------------------------------------------------------------------------#
 
-# check main serve type for each server --------------------------------------#
+# check main serve type for each server ----------------#
 main_serve_type <- 
   data %>%
   group_by(server, serve_type) %>% 
-  summarise(n = n()) %>% 
+  summarise(n = n(),
+            error_perc = sum(is.na(serve_outcome))/n) %>% 
   group_by(server) %>% 
   slice_max(order_by = n)
 #-----------------------------------------------------------------------------#
@@ -56,39 +57,54 @@ point_prob_data <-
   )
 #-----------------------------------------------------------------------------#
 
-# calculate average point scoring probability for each serve speed per player #
+# calculate average point scoring probability and ----------------------------#
+# average error percentage for each serve speed per player -------------------#
 avg_point_prob_data <- 
   point_prob_data %>%
   group_by(server, serve_speed) %>% 
-  summarize(avg_prob = mean(point_probability)) %>% 
+  summarize(avg_prob = mean(point_probability),
+            avg_err_perc = sum(point_probability == 0)/n(),
+            avg_ace_perc = sum(point_probability == 1)/n()) %>% 
   arrange(server)
 #-----------------------------------------------------------------------------#
 
-# perform k-smoothing on serve_speed vs avg_prob -----------------------------#
-gaussian <- 
+# perform k-smoothing on serve_speed vs avg_prob & error_perc ----------------#
+ksmooth_values <- 
   avg_point_prob_data %>%
   group_by(server) %>% 
-  summarize(gaussian = ksmooth(x = serve_speed,
-                               y = avg_prob,
-                               kernel = "normal",
-                               bandwidth = 10,
-                               n.points = n())) %>% 
-  pivot_wider(names_from = server,
-              values_from = gaussian) %>% 
-  unnest()
+  summarize(ksmooth_point_prob = list(ksmooth(x = serve_speed,
+                                              y = avg_prob,
+                                              kernel = "normal",
+                                              bandwidth = 7,
+                                              n.points = n())), 
+            ksmooth_error_perc = list(ksmooth(x = serve_speed,
+                                              y = avg_err_perc,
+                                              kernel = "normal",
+                                              bandwidth = 7,
+                                              n.points = n())),
+            ksmooth_ace_perc = list(ksmooth(x = serve_speed,
+                                            y = avg_ace_perc,
+                                            kernel = "normal",
+                                            bandwidth = 7,
+                                            n.points = n()))
+  ) %>% 
+  unnest_wider(col = c(ksmooth_point_prob,
+                       ksmooth_error_perc,
+                       ksmooth_ace_perc),
+               names_sep = "") %>% 
+  unnest(col = -server) %>% 
+  select(-4, -6) %>% 
+  setNames(., c("server",
+                "serve_velocity",
+                "point_prob",
+                "error_perc",
+                "ace_perc")) 
 #-----------------------------------------------------------------------------#
 
 # wrangle ksmooth data to obtain most optimal serve speeds for each server ---#
 top2_serve_velocity <- 
-  gaussian %>% 
-  t() %>% 
-  as.data.frame() %>% 
-  rownames_to_column(var = "server") %>% 
-  unnest(cols = c("V1", "V2")) %>% 
-  mutate(server = as.factor(server),
-         serve_velocity = V1,
-         point_prob = V2) %>% 
-  select(-V1, -V2) %>% 
+  ksmooth_values %>% 
+  select(server, serve_velocity, point_prob) %>% 
   group_by(server) %>% 
   slice_max(order_by = point_prob, n = 2)
 #-----------------------------------------------------------------------------#
@@ -136,219 +152,15 @@ optimal_serve_velocity_table <-
 
 
 # Create a plots of avg point prob vs serve_speed for each player ------------#
-## SERVER 0
-server_0_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 0) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`0`$x, y = gaussian$`0`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_0_analysis
-#-----------------------------------------------------------------------------#
-
 ## SERVER 1
 server_1_analysis <- 
-  avg_point_prob_data %>%
+  ksmooth_values %>%
   filter(server == 1) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`1`$x, y = gaussian$`1`$y)) +
+  ggplot(aes(x = serve_velocity)) +
+  geom_line(aes(y = point_prob), size = 0.75) +
+  geom_line(aes(y = error_perc), size = 0.75) +
+  geom_line(aes(y = ace_perc), size = 0.75) +
   labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
 
 server_1_analysis
 #-----------------------------------------------------------------------------#
-
-## SERVER 2
-server_2_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 2) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`2`$x, y = gaussian$`2`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_2_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 3
-server_3_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 3) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`3`$x, y = gaussian$`3`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_3_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 4
-server_4_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 4) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`4`$x, y = gaussian$`4`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_4_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 5
-server_5_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 5) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`5`$x, y = gaussian$`5`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_5_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 7
-server_7_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 7) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`7`$x, y = gaussian$`7`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_7_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 8
-server_8_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 8) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`8`$x, y = gaussian$`8`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_8_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 9
-server_9_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 9) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`9`$x, y = gaussian$`9`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_9_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 10
-server_10_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 10) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`10`$x, y = gaussian$`10`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_10_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 11
-server_11_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 11) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`11`$x, y = gaussian$`11`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_11_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 12
-server_12_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 12) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`12`$x, y = gaussian$`12`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_12_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 13
-server_13_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 13) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`13`$x, y = gaussian$`13`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_13_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 14
-server_14_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 14) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`14`$x, y = gaussian$`14`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_14_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 15
-server_15_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 15) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`15`$x, y = gaussian$`15`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_15_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 16
-server_16_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 16) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`16`$x, y = gaussian$`16`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_16_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 18
-server_18_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 18) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`18`$x, y = gaussian$`18`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_18_analysis
-#-----------------------------------------------------------------------------#
-
-## SERVER 20
-server_20_analysis <- 
-  avg_point_prob_data %>%
-  filter(server == 20) %>% 
-  ggplot(aes(x = serve_speed, y = avg_prob)) +
-  geom_point() +
-  geom_line(aes(x = gaussian$`20`$x, y = gaussian$`20`$y)) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_20_analysis
-#-----------------------------------------------------------------------------#
-
