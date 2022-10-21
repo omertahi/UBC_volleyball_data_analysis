@@ -2,6 +2,7 @@
 library(tidyverse)
 library(readxl)
 library(gridExtra)
+library(ggspectra)
 #-----------------------------------------------------------------------------#
 
 # read data ------------------------------------------------------------------#
@@ -147,20 +148,4 @@ optimal_serve_velocity_table <-
 #     width = 200*ncol(optimal_serve_velocity_table))
 # grid.table(optimal_serve_velocity_table)
 # dev.off()
-#-----------------------------------------------------------------------------#
-
-
-
-# Create a plots of avg point prob vs serve_speed for each player ------------#
-## SERVER 1
-server_1_analysis <- 
-  ksmooth_values %>%
-  filter(server == 1) %>% 
-  ggplot(aes(x = serve_velocity)) +
-  geom_line(aes(y = point_prob), size = 0.75) +
-  geom_line(aes(y = error_perc), size = 0.75) +
-  geom_line(aes(y = ace_perc), size = 0.75) +
-  labs(x = "Serve Speed (km/h)", y = "Probability of scoring a point")
-
-server_1_analysis
 #-----------------------------------------------------------------------------#

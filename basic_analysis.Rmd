@@ -16,6 +16,7 @@ knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(readxl)
 library(gridExtra)
+library(ggspectra)
 #-----------------------------------------------------------------------------#
 
 # read data ------------------------------------------------------------------#
@@ -167,12 +168,31 @@ plot_data <-
 
 main_plot <- 
   plot_data %>%
-  ggplot(aes(x = serve_velocity)) +
-  geom_line(aes(y = percentage, color = type)) +
+  ggplot(aes(x = serve_velocity, y = percentage)) +
+  geom_line(aes(color = type)) +
   facet_wrap(vars(server), ncol = 1, scales = "free") +
   labs(x = "Serve Speed (km/h)", y = "") +
   theme_bw()
 
-main_plot
+
+final_main_plot <- ggplot_build(main_plot)
+main_plot + 
+  stat_peaks(data = plot_data %>% filter(type == "point_prob"),
+             aes(x = serve_velocity, y = percentage),
+             span = 5,
+             color = "black"
+  ) +
+  stat_peaks(data = plot_data %>% filter(type == "point_prob"),
+             aes(x = serve_velocity,
+                 y = percentage,
+                 label = paste0(as.numeric(after_stat(y.label))*100,
+                               "% at ",
+                               after_stat(x.label),
+                               " km/h")),
+             span = 5,
+             geom = "text",
+             vjust = -0.5,
+             size = 3)
+
 #-----------------------------------------------------------------------------#
 ```
