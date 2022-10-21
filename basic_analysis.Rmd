@@ -158,23 +158,33 @@ optimal_serve_velocity_table <-
 ```
 
 ```{r plot, fig.width=12, fig.height=50}
-# Create a plots of avg point prob vs serve_speed for each player ------------#
-## SERVER 1
+# create a plots of ksmooth values for point probability, -------------------#
+# error percentage and ace percentage on the y-axis and ---------------------#
+# serve speed on the x-axis -------------------------------------------------#
+
+# manipulate ksmooth_values dataframe to get a type column which has 
+# one column called Type containing the different types of percentage i.e
+# point earning percentage, error percentage and ace percentage
 plot_data <- 
   ksmooth_values %>% 
   pivot_longer(cols = c(point_prob, error_perc, ace_perc),
                names_to = "type",
                values_to = "percentage")
 
+# create the ggplot which is faceted into subplots for each server
 main_plot <- 
   plot_data %>%
   ggplot(aes(x = serve_velocity, y = percentage)) +
   geom_line(aes(color = type)) +
   facet_wrap(vars(server), ncol = 1, scales = "free") +
-  labs(x = "Serve Speed (km/h)", y = "") +
+  labs(x = "Serve Speed (km/h)", y = "", color = "") +
+  scale_color_discrete(labels = c("Ace Percentage",
+                                  "Error Percentage",
+                                  "Earn Percentage")) +
   theme_bw()
 
-
+# add and label the local maxima points on the point earning percentage
+# line for each server
 final_main_plot <- ggplot_build(main_plot)
 main_plot + 
   stat_peaks(data = plot_data %>% filter(type == "point_prob"),
