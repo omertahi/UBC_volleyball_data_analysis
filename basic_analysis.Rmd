@@ -50,18 +50,18 @@ count_serve_type <-
 #-----------------------------------------------------------------------------#
 
 # check main serve type for each server --------------------------------------#
-main_serve_type <- 
+main_serve_type <-
   data %>%
-  group_by(server, serve_type) %>% 
+  group_by(server, serve_type) %>%
   summarise(n = n(),
-            error_perc = sum(is.na(serve_outcome))/n) %>% 
-  group_by(server) %>% 
+            error_perc = sum(is.na(serve_outcome))/n) %>%
+  group_by(server) %>%
   slice_max(order_by = n)
 #-----------------------------------------------------------------------------#
 
 # semi-join data with main_serve_type_for_player to get corresponding complete data rows
-main_serve_type_data <- 
-  data %>% 
+main_serve_type_data <-
+  data %>%
   semi_join(main_serve_type,
             by = c("server", "serve_type"))
 #-----------------------------------------------------------------------------#
@@ -114,7 +114,7 @@ ksmooth_values <-
                        ksmooth_ace_perc),
                names_sep = "") %>% 
   unnest(col = -server) %>% 
-  select(-4, -6) %>% 
+  select(-c("ksmooth_error_percx", "ksmooth_ace_percx")) %>% 
   setNames(., c("server",
                 "serve_velocity",
                 "point_prob",
@@ -160,6 +160,8 @@ optimal_serve_velocity_table <-
          optimal_velocity_range = sapply(optimal_serve_velocity, plus_minus_2),
          second_optimal_velocity_range = sapply(second_optimal_serve_velocity, plus_minus_2)) %>% 
   select(1, 6, 8, 10, 7, 9, 11)
+
+optimal_serve_velocity_table
 #-----------------------------------------------------------------------------#
 ```
 
