@@ -6,7 +6,7 @@ library(ggspectra)
 
 # Data pre-processing ----
 # read data
-volleyball_data <- read_excel("C:/Users/omert/OneDrive/Desktop/UBC voleyball/UBC_volleyball_data_analysis/SAMPLE DATA- TWU FRI.xlsx")
+volleyball_data <- read_excel(paste0(getwd(), "/SAMPLE DATA- TWU FRI.xlsx"))
 
 # combine cut-spin and spin as spin in the serve_type column
 `%notin%` <- Negate(`%in%`)
