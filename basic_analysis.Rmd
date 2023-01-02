@@ -216,44 +216,43 @@ main_plot +
 ```
 
 ```{r logistic_regression}
-library(MASS)
-roster_number = 2
-point_data <- volleyball_data %>% drop_na(point_outcome)
-point_data$server_to<- as.factor(point_data$server_to)
-point_data$serve_tape<- as.factor(point_data$serve_tape)
-point_data$serve_outcome<- as.factor(point_data$serve_outcome)
-
-
-full_logistic <- point_data  %>%
-mutate(serve_outcome = coalesce(serve_outcome, "err")) 
-
-
-all_player_logistic <- glm(point_outcome ~ server_to + serve_type + server_to*passer_position + passer_position + serve_tape+serve_speed+serve_outcome+ seam_positioning, data=  full_logistic, family= binomial)
-
-summary(all_player_logistic)
-#full_backwards <- all_player_logistic %>% stepAIC(trace= FALSE)
-#coef(full_backwards)
-
-
-#point_data <- point_data %>% mutate(seams == ifelse(server_to == 1 & passer_position == or("LL","LC","LH")),"1-6",7)
-
-
-#logistic_player_data <- point_data %>% filter(server == roster_number) %>% select(-point) %>%
-# select(-server) %>% select(-serve_from) %>% select(-serve_outcome_overpass) %>%
-#  mutate(serve_outcome = coalesce(serve_outcome, "err")) 
-logistic_player_data <- full_logistic %>% filter(server== roster_number)
-# logistic_player_data <- point_data %>% filter(server == roster_number)
-# # 
-# # sapply(lapply(logistic_player_data,unique),length)
-# # 
-# fullmod <- glm(point_outcome ~ server_to + serve_type + serve_tape+serve_speed+serve_outcome+ passer_position, data=  logistic_player_data, family= binomial)
-player_full_mod <- glm(point_outcome ~ server_to + serve_type + server_to*passer_position + passer_position + serve_tape+serve_speed+serve_outcome+seam_positioning, data=  logistic_player_data, family= binomial)
-# summary(fullmod)
-summary(player_full_mod)
-# #  
-#backwards <- player_full_mod %>%stepAIC(trace= FALSE)
-# # 
-# coef(backwards)
+# library(MASS)
+# roster_number = 2
+# point_data <- volleyball_data %>% drop_na(point_outcome)
+# point_data$server_to<- as.factor(point_data$server_to)
+# point_data$serve_tape<- as.factor(point_data$serve_tape)
+# point_data$serve_outcome<- as.factor(point_data$serve_outcome)
+# 
+# 
+# full_logistic <- point_data  %>%
+# mutate(serve_outcome = coalesce(serve_outcome, "err")) 
+# 
+# 
+# all_player_logistic <- glm(point_outcome ~ server_to + serve_type + server_to*passer_position + passer_position + serve_tape+serve_speed+serve_outcome+ seam_positioning, data=  full_logistic, family= binomial)
+# 
+# summary(all_player_logistic)
+# #full_backwards <- all_player_logistic %>% stepAIC(trace= FALSE)
+# #coef(full_backwards)
+# 
+# 
+# #point_data <- point_data %>% mutate(seams == ifelse(server_to == 1 & passer_position == or("LL","LC","LH")),"1-6",7)
+# 
+# 
+# #logistic_player_data <- point_data %>% filter(server == roster_number) %>% select(-point) %>%
+# # select(-server) %>% select(-serve_from) %>% select(-serve_outcome_overpass) %>%
+# #  mutate(serve_outcome = coalesce(serve_outcome, "err")) 
+# logistic_player_data <- full_logistic %>% filter(server== roster_number)
+# # logistic_player_data <- point_data %>% filter(server == roster_number)
+# # # 
+# # # sapply(lapply(logistic_player_data,unique),length)
+# # # 
+# # fullmod <- glm(point_outcome ~ server_to + serve_type + serve_tape+serve_speed+serve_outcome+ passer_position, data=  logistic_player_data, family= binomial)
+# player_full_mod <- glm(point_outcome ~ server_to + serve_type + server_to*passer_position + passer_position + serve_tape+serve_speed+serve_outcome+seam_positioning, data=  logistic_player_data, family= binomial)
+# # summary(fullmod)
+# summary(player_full_mod)
+# # #  
+# #backwards <- player_full_mod %>%stepAIC(trace= FALSE)
+# # # 
+# # coef(backwards)
 ```
-<!-- git push -u origin master -->
 
