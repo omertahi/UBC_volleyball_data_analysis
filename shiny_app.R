@@ -4,6 +4,11 @@ library(readxl)
 library(gridExtra)
 library(ggspectra)
 
+# Next to do:
+# add slider for k for knn
+# add local maxima 
+# add bar graph of number of serves at each speed
+
 # Data pre-processing ----
 # read data
 volleyball_data <- read_excel(paste0(getwd(), "/SAMPLE DATA- TWU FRI.xlsx"))
@@ -143,7 +148,7 @@ server <- function(input, output) {
            position == input$position) %>%
     ggplot(aes(x = serve_velocity, y = percentage)) +
     geom_line(aes(color = perc_type)) +
-    labs(x = "Serve Speed (km/h)", y = "Percentage (%)", color = "") +
+    labs(x = "Serve Speed (km/h)", y = "Percentage (%)", color = "")+
     scale_colour_manual(values=c("#00FF00", "#FF0000", "#0000FF"),
                         labels = c("Ace Percentage",
                                    "Error Percentage",
