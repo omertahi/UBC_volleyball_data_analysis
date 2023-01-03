@@ -101,8 +101,8 @@ shiny_plot_data <-
 
 slider_filter <- 
   shiny_plot_data %>% 
-  filter(server == 1,
-         serve_type == "float",
+  filter(server == 2,
+         serve_type == "spin",
          position == 1)
 
 shiny_plot <- 

@@ -193,7 +193,7 @@ main_plot <-
 
 # add and label the local maxima points on the point earning percentage
 # line for each server
-final_main_plot <- ggplot_build(main_plot)
+# final_main_plot <- ggplot_build(main_plot)
 main_plot + 
   stat_peaks(data = plot_data %>% filter(type == "point_prob"),
              aes(x = serve_velocity, y = percentage),
