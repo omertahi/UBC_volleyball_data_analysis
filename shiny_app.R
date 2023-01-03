@@ -53,7 +53,7 @@ ui <- fluidPage(
                          choices = list("1" = 1,
                                         "5" = 5,
                                         "6" = 6),
-                       selected = 1),
+                         selected = 1),
       
       # Input: Slider for k-nn bandwidth
       numericInput("k", "K-NN Bandwidth", 
@@ -102,24 +102,34 @@ server <- function(input, output) {
                                          serve_outcome == 4 ~ 0.366,
                                          TRUE ~ 0)
     )
+
   
   # calculate average point scoring probability and 
   # average error percentage for each serve speed per player
-  avg_pp_data <- 
-    pp_data %>% 
-    group_by(server, serve_type, serve_speed, server_to, serve_from) %>% 
-    summarize(avg_prob = mean(point_probability),
-              avg_err_perc = sum(point_probability == 0)/n(),
-              avg_ace_perc = sum(point_probability == 1)/n()) %>% 
-    arrange(server)
+  avg_pp_data_reactive <- reactive({
+    req(input$server)
+    req(input$serve_type)
+    req(input$serve_to)
+    req(input$serve_from)
+    avg_pp_data <- 
+      pp_data %>% 
+      filter(serve_type == input$serve_type,
+             server == input$server,
+             server_to %in% input$serve_to,
+             serve_from %in% input$serve_from) %>% 
+      group_by(serve_speed) %>% 
+      summarize(avg_prob = mean(point_probability),
+                avg_err_perc = sum(point_probability == 0)/n(),
+                avg_ace_perc = sum(point_probability == 1)/n())
+  })
+  
   
   
   ## perform k-smoothing
   ksmoothed_data_reactive <- reactive({
     req(input$k)
     ksmoothed_data <- 
-      avg_pp_data %>%
-      group_by(server, serve_type, server_to, serve_from) %>% 
+      avg_pp_data_reactive() %>%
       summarize(ksmooth_point_prob = list(ksmooth(x = serve_speed,
                                                   y = avg_prob,
                                                   kernel = "normal",
@@ -140,31 +150,21 @@ server <- function(input, output) {
                            ksmooth_error_perc,
                            ksmooth_ace_perc),
                    names_sep = "") %>% 
-      unnest(col = -server) %>% 
+      unnest() %>% 
       select(-c("ksmooth_error_percx", "ksmooth_ace_percx")) %>% 
-      setNames(., c("server",
-                    "serve_type",
-                    "serve_to",
-                    "serve_from",
-                    "serve_velocity",
+      setNames(., c("serve_velocity",
                     "point_prob",
                     "error_perc",
                     "ace_perc")) %>% 
-      ## create a plot of ksmooth values for point probability where:
-      ## - error percentage and ace percentage on the y-axis and 
-      ## - serve speed on the x-axis 
       pivot_longer(cols = c(point_prob, error_perc, ace_perc),
                    names_to = "perc_type",
-                   values_to = "percentage") %>% 
-      filter(server == input$server,
-             serve_type == input$serve_type,
-             serve_to %in% input$serve_to,
-             serve_from %in% input$serve_from)
+                   values_to = "percentage")
   })
   
   
 
-  
+  ############################################################
+  ############################################################
   # shiny plot
   output$shinyPlot <- renderPlot({
     
