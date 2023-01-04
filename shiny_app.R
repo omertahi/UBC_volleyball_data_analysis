@@ -22,11 +22,18 @@ ui <- fluidPage(
     sidebarPanel(
       
       # Input: Selector for serve_type to filter for ----
-      selectInput(inputId = "serve_type",
-                  label = "Type of Serve:",
-                  c("Float" = "float",
-                    "Spin" = "spin",
-                    "Hybrid" = "hybrid")),
+      pickerInput("serve_type","Type of Serve:",
+                  choices = list("Float" = "float", 
+                                 "Spin" = "spin", 
+                                 "Hybrid" = "hybrid"),
+                  selected = c(),
+                  options = list(`actions-box` = TRUE),
+                  multiple = T),
+      # selectInput(inputId = "serve_type",
+      #             label = "Type of Serve:",
+      #             c("Float" = "float",
+      #               "Spin" = "spin",
+      #               "Hybrid" = "hybrid")),
       
       # Input: Slider for server number  ----
       sliderInput("server", "Server Number:",
@@ -46,11 +53,18 @@ ui <- fluidPage(
                   multiple = T),
       
       # Input: Checkbox for server from:  ----
-      checkboxGroupInput("serve_from", "Serve from:",
-                         choices = list("1" = 1,
-                                        "5" = 5,
-                                        "6" = 6),
-                         selected = 1),
+      pickerInput("serve_from","Serve From:",
+                  choices = list("1" = 1, 
+                                 "5" = 5, 
+                                 "6" = 6),
+                  selected = c(1,5,6),
+                  options = list(`actions-box` = TRUE),
+                  multiple = T),
+      # checkboxGroupInput("serve_from", "Serve from:",
+      #                    choices = list("1" = 1,
+      #                                   "5" = 5,
+      #                                   "6" = 6),
+      #                    selected = 1),
       
       # Input: Slider for k-nn bandwidth
       numericInput("k", "K-NN Bandwidth", 
@@ -102,7 +116,7 @@ server <- function(input, output) {
                                          serve_outcome == 4 ~ 0.366,
                                          TRUE ~ 0)
     )
-
+  
   
   # calculate average point scoring probability and 
   # average error percentage for each serve speed per player
@@ -162,7 +176,7 @@ server <- function(input, output) {
   })
   
   
-
+  
   ############################################################
   ############################################################
   # shiny plot
@@ -200,9 +214,9 @@ server <- function(input, output) {
                  geom = "text",
                  vjust = -0.5,
                  size = 3)
-
+    
   })
-
+  
   sample_size_table_reactive <- reactive({
     req(input$server)
     req(input$serve_type)
