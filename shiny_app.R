@@ -11,9 +11,9 @@ library(ggspectra)
 
 # See above for the definitions of ui and server
 ui <- fluidPage(
-  
+  tags$style(HTML(".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: #F2A900}")),
   # App title ----
-  titlePanel("UBC Volleyball Data Analysis"),
+  titlePanel(div("UBC Volleyball Data Analysis", style = "color: #F2A900")),
   
   # Sidebar layout with input and output definitions ----
   sidebarLayout(
@@ -172,7 +172,8 @@ server <- function(input, output) {
       ggplot(aes(x = serve_velocity, y = percentage)) +
       geom_line(aes(color = perc_type)) +
       labs(x = "Serve Speed (km/h)", y = "Percentage (%)", color = "") +
-      scale_colour_manual(values=c("#00FF00", "#FF0000", "#0000FF"),
+      ggtitle("Optimal Serve Velocity")+
+      scale_colour_manual(values=c("#80D77B", "#F50330", "#002145"),
                           labels = c("Ace Percentage",
                                      "Error Percentage",
                                      "Earn Percentage")) +
@@ -180,7 +181,10 @@ server <- function(input, output) {
       theme(legend.position = c(0.255, 0.970),
             legend.key.size = unit(0.25, "cm"),
             legend.direction="horizontal",
-            legend.background = element_rect(colour = 'black', fill = 'white', linetype = 'solid')) +
+            legend.background = element_rect(colour = '#002145', fill = 'white', linetype = 'solid'),
+            axis.title.x = element_text(colour = "#002145"),
+            axis.title.y = element_text(colour = "#002145"),
+            plot.title = element_text(colour = "#F2A900")) +
       stat_peaks(data = ksmoothed_data_reactive() %>% filter(perc_type == "point_prob"),
                  aes(x = serve_velocity, y = percentage),
                  span = 5,
@@ -219,11 +223,14 @@ server <- function(input, output) {
     
     sample_size_table_reactive() %>% 
       ggplot(aes(x = serve_speed, y = sample_size)) +
-      geom_bar(stat = "identity", color = "#F2A900", fill = "#002145", width = 1) +
+      geom_bar(stat = "identity", color = "#002145", fill = "#F2A900", width = 1) +
       labs(x = "Serve Speed (km/h)", y = "Sample Size") +
       geom_text(aes(label = sample_size), vjust = -0.5, size = 2.5) +
       scale_y_continuous(expand = expansion(mult = c(0, .1))) +
-      theme_bw()
+      theme_bw()+
+      theme(axis.title.x = element_text(colour = "#002145"),
+            axis.title.y = element_text(colour = "#002145"),
+            plot.title = element_text(colour = "#F2A900"))
   })
   
   
