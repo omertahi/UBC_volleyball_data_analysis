@@ -4,12 +4,6 @@ library(readxl)
 library(gridExtra)
 library(ggspectra)
 
-# Next to do:
-# add slider for k for knn
-# add local maxima 
-# add bar graph of number of serves at each speed
-
-
 #################################################################
 #################################################################
 
@@ -65,7 +59,10 @@ ui <- fluidPage(
     mainPanel(
       
       # Output: ShinyPlot ----
-      plotOutput(outputId = "shinyPlot")
+      plotOutput(outputId = "shinyPlot"),
+      
+      # Output: SampleSize barPlot
+      plotOutput(outputId = "sample_size_bar_plot")
       
     )
   )
@@ -177,6 +174,10 @@ server <- function(input, output) {
                                      "Error Percentage",
                                      "Earn Percentage")) +
       theme_bw() + 
+      theme(legend.position = c(0.255, 0.970),
+            legend.key.size = unit(0.25, "cm"),
+            legend.direction="horizontal",
+            legend.background = element_rect(colour = 'black', fill = 'white', linetype = 'solid')) +
       stat_peaks(data = ksmoothed_data_reactive() %>% filter(perc_type == "point_prob"),
                  aes(x = serve_velocity, y = percentage),
                  span = 5,
@@ -195,6 +196,34 @@ server <- function(input, output) {
 
   })
 
+  sample_size_table_reactive <- reactive({
+    req(input$server)
+    req(input$serve_type)
+    req(input$serve_to)
+    req(input$serve_from)
+    sample_size_table <- 
+      pp_data %>% 
+      filter(serve_type == input$serve_type,
+             server == input$server,
+             server_to %in% input$serve_to,
+             serve_from %in% input$serve_from) %>% 
+      group_by(serve_speed) %>% 
+      summarize(sample_size = n())
+  })
+  
+  
+  output$sample_size_bar_plot <- renderPlot({
+    
+    sample_size_table_reactive() %>% 
+      ggplot(aes(x = serve_speed, y = sample_size)) +
+      geom_bar(stat = "identity", color = "#F2A900", fill = "#002145", width = 1) +
+      labs(x = "Serve Speed (km/h)", y = "Sample Size") +
+      geom_text(aes(label = sample_size), vjust = -0.5, size = 2.5) +
+      scale_y_continuous(expand = expansion(mult = c(0, .1))) +
+      theme_bw()
+  })
+  
+  
 }
 
 shinyApp(ui = ui, server = server)
