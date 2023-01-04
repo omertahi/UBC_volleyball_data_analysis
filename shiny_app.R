@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyWidgets)
 library(tidyverse)
 library(readxl)
 library(gridExtra)
@@ -32,15 +33,17 @@ ui <- fluidPage(
                   min = 1, max = 20,
                   value = 1, step = 1),
       
-      # Input: Checkbox for serve to:  ----
-      checkboxGroupInput("serve_to", "Serve To:", 
-                         choices = list("1" = 1, 
-                                        "2" = 2, 
-                                        "3" = 3,
-                                        "4" = 4,
-                                        "5" = 5,
-                                        "6" = 6),
-                         selected = 1),
+      # Input: Picker for serve to:  ----
+      pickerInput("serve_to","Serve To:",
+                  choices = list("1" = 1, 
+                                 "2" = 2, 
+                                 "3" = 3,
+                                 "4" = 4,
+                                 "5" = 5,
+                                 "6" = 6),
+                  selected = c(1:6),
+                  options = list(`actions-box` = TRUE),
+                  multiple = T),
       
       # Input: Checkbox for server from:  ----
       checkboxGroupInput("serve_from", "Serve from:",
