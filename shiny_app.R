@@ -29,11 +29,6 @@ ui <- fluidPage(
                   selected = c(),
                   options = list(`actions-box` = TRUE),
                   multiple = T),
-      # selectInput(inputId = "serve_type",
-      #             label = "Type of Serve:",
-      #             c("Float" = "float",
-      #               "Spin" = "spin",
-      #               "Hybrid" = "hybrid")),
       
       # Input: Slider for server number  ----
       sliderInput("server", "Server Number:",
@@ -52,7 +47,7 @@ ui <- fluidPage(
                   options = list(`actions-box` = TRUE),
                   multiple = T),
       
-      # Input: Checkbox for server from:  ----
+      # Input: Picker for server from:  ----
       pickerInput("serve_from","Serve From:",
                   choices = list("1" = 1, 
                                  "5" = 5, 
@@ -60,13 +55,8 @@ ui <- fluidPage(
                   selected = c(1,5,6),
                   options = list(`actions-box` = TRUE),
                   multiple = T),
-      # checkboxGroupInput("serve_from", "Serve from:",
-      #                    choices = list("1" = 1,
-      #                                   "5" = 5,
-      #                                   "6" = 6),
-      #                    selected = 1),
       
-      # Input: Slider for k-nn bandwidth
+      # Input: Input for k-nn bandwidth
       numericInput("k", "K-NN Bandwidth", 
                    value = 5)
       
@@ -164,7 +154,7 @@ server <- function(input, output) {
                            ksmooth_error_perc,
                            ksmooth_ace_perc),
                    names_sep = "") %>% 
-      unnest() %>% 
+      unnest(cols = everything()) %>% 
       select(-c("ksmooth_error_percx", "ksmooth_ace_percx")) %>% 
       setNames(., c("serve_velocity",
                     "point_prob",
@@ -224,7 +214,7 @@ server <- function(input, output) {
     req(input$serve_from)
     sample_size_table <- 
       pp_data %>% 
-      filter(serve_type == input$serve_type,
+      filter(serve_type %in% input$serve_type,
              server == input$server,
              server_to %in% input$serve_to,
              serve_from %in% input$serve_from) %>% 
