@@ -20,18 +20,35 @@ data <-
   mutate(serve_type = replace(volleyball_data$serve_type,
                               volleyball_data$serve_type == "Cut Spin",
                               "Spin"),
-         across(.cols = c(server, server_position, serve_speed), as.numeric)) %>%
+         across(.cols = c(server, serve_from, serve_speed), as.numeric)) %>%
   filter(!is.na(server),
          server %notin% c(0, 99))
 
+##############################################################
+##############################################################
+### COMPARING OLD DATA
+vb_dat <- read_excel(paste0(getwd(), "/SAMPLE DATA- TWU FRI.xlsx"))
+
+dat <-
+  vb_dat %>%
+  mutate(serve_type = replace(vb_dat$serve_type,
+                              vb_dat$serve_type == "Cut_Spin",
+                              "Spin"),
+         across(.cols = c(server, serve_from, serve_speed), as.numeric)) %>%
+  filter(!is.na(server),
+         server %notin% c(0, 99))
+
+##############################################################
+##############################################################
+
 ## add point_probability column
 pp_data <-
-  data %>%
-  mutate(point_probability = case_when(pass_outcome == 0 ~ 1,
-                                       pass_outcome == 1 ~ 0.614,
-                                       pass_outcome == 2 ~ 0.473,
-                                       pass_outcome == 3 ~ 0.329,
-                                       pass_outcome == 4 ~ 0.366,
+  dat %>%
+  mutate(point_probability = case_when(serve_outcome == 0 ~ 1,
+                                       serve_outcome == 1 ~ 0.614,
+                                       serve_outcome == 2 ~ 0.473,
+                                       serve_outcome == 3 ~ 0.329,
+                                       serve_outcome == 4 ~ 0.366,
                                        TRUE ~ 0))
 
 
@@ -39,10 +56,10 @@ pp_data <-
 # average error percentage for each serve speed per player
 avg_pp_data <-
   pp_data %>%
-  filter(serve_type == "Spin",
+  filter(serve_type == "spin",
          server == 2,
-         reciever_position %in% c(1:6),
-         server_position %in% c(1, 5, 6)) %>%
+         server_to %in% c(1:6),
+         serve_from %in% c(1, 5, 6)) %>%
   group_by(serve_speed) %>%
   summarize(
     avg_prob = mean(point_probability),
@@ -59,16 +76,17 @@ ksmoothed_data <-
     ksmooth_point_prob = list(ksmooth(x = serve_speed,
                                       y = avg_prob,
                                       kernel = "normal",
-                                      bandwidth = 3,
+                                      bandwidth = 7,
                                       n.points = n())),
     ksmooth_error_perc = list(ksmooth(x = serve_speed,
                                       y = avg_err_perc,
                                       kernel = "normal",
-                                      bandwidth = 3,
+                                      bandwidth = 7,
                                       n.points = n())),
     ksmooth_ace_perc = list(ksmooth(x = serve_speed,
                                     y = avg_ace_perc,
-                                    kernel = "normal",bandwidth = 3,
+                                    kernel = "normal",
+                                    bandwidth = 7,
                                     n.points = n()))) %>%
   unnest_wider(col = c(ksmooth_point_prob,
                        ksmooth_error_perc,
@@ -142,7 +160,7 @@ sample_size_table <-
   filter(
     serve_type %in% input$serve_type,
     server == input$server,
-    reciever_position %in% input$reciever_position,
+    server_to %in% input$server_to,
     passer_position %in% input$passer_position
   ) %>%
   group_by(serve_speed) %>%

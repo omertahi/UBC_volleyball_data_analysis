@@ -23,9 +23,9 @@ ui <- fluidPage(
       
       # Input: Selector for serve_type to filter for ----
       pickerInput("serve_type","Type of Serve:",
-                  choices = list("Float" = "float", 
-                                 "Spin" = "spin", 
-                                 "Hybrid" = "hybrid"),
+                  choices = list("Float" = "Float", 
+                                 "Spin" = "Spin", 
+                                 "Hybrid" = "Hybrid"),
                   selected = c(),
                   options = list(`actions-box` = TRUE),
                   multiple = T),
