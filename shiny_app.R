@@ -48,7 +48,7 @@ ui <- fluidPage(
                   multiple = T),
       
       # Input: Picker for server from:  ----
-      pickerInput("passer_position","Serve From:",
+      pickerInput("server_position","Serve From:",
                   choices = list("1" = 1, 
                                  "5" = 5, 
                                  "6" = 6),
@@ -97,7 +97,7 @@ server <- function(input, output) {
     mutate(serve_type = replace(volleyball_data$serve_type,
                                 volleyball_data$serve_type == "Cut Spin",
                                 "Spin"),
-           server = as.numeric(server)) %>% 
+           across(.cols = c(server_position, serve_speed), as.numeric)) %>% 
     filter(!is.na(server),
            server %notin% c(0, 99))
   
@@ -119,13 +119,13 @@ server <- function(input, output) {
     req(input$server)
     req(input$serve_type)
     req(input$reciever_position)
-    req(input$passer_position)
+    req(input$server_position)
     avg_pp_data <- 
       pp_data %>% 
       filter(serve_type == input$serve_type,
              server == input$server,
              reciever_position %in% input$reciever_position,
-             passer_position %in% input$passer_position) %>% 
+             server_position %in% input$server_position) %>% 
       group_by(serve_speed) %>% 
       summarize(avg_prob = mean(point_probability),
                 avg_err_perc = sum(point_probability == 0)/n(),
@@ -216,13 +216,13 @@ server <- function(input, output) {
     req(input$server)
     req(input$serve_type)
     req(input$reciever_position)
-    req(input$passer_position)
+    req(input$server_position)
     sample_size_table <- 
       pp_data %>% 
       filter(serve_type %in% input$serve_type,
              server == input$server,
              reciever_position %in% input$reciever_position,
-             passer_position %in% input$passer_position) %>% 
+             server_position %in% input$server_position) %>% 
       group_by(serve_speed) %>% 
       summarize(sample_size = n())
   })
