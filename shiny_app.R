@@ -36,7 +36,7 @@ ui <- fluidPage(
                   value = 1, step = 1),
       
       # Input: Picker for serve to:  ----
-      pickerInput("serve_to","Serve To:",
+      pickerInput("reciever_position","Serve To:",
                   choices = list("1" = 1, 
                                  "2" = 2, 
                                  "3" = 3,
@@ -48,7 +48,7 @@ ui <- fluidPage(
                   multiple = T),
       
       # Input: Picker for server from:  ----
-      pickerInput("serve_from","Serve From:",
+      pickerInput("server_position","Serve From:",
                   choices = list("1" = 1, 
                                  "5" = 5, 
                                  "6" = 6),
@@ -82,7 +82,7 @@ server <- function(input, output) {
   
   # Data pre-processing ----
   # read data
-  volleyball_data <- read_excel(paste0(getwd(), "/SAMPLE DATA- TWU FRI.xlsx"))
+  volleyball_data <- read_excel("UBC volleyball data input.xlsx",sheet = "Consolidated Data")
   
   # combine cut-spin and spin as spin in the serve_type column
   `%notin%` <- Negate(`%in%`)
@@ -90,8 +90,8 @@ server <- function(input, output) {
   data <- 
     volleyball_data %>% 
     mutate(serve_type = replace(volleyball_data$serve_type,
-                                volleyball_data$serve_type == "cut_spin",
-                                "spin"),
+                                volleyball_data$serve_type == "Cut_Spin",
+                                "Spin"),
            server = as.numeric(server)) %>% 
     filter(!is.na(server),
            server %notin% c(0, 99))
@@ -99,11 +99,11 @@ server <- function(input, output) {
   ## add point_probability column
   pp_data <- 
     data %>% 
-    mutate(point_probability = case_when(serve_outcome == 0 ~ 1,
-                                         serve_outcome == 1 ~ 0.614,
-                                         serve_outcome == 2 ~ 0.473,
-                                         serve_outcome == 3 ~ 0.329,
-                                         serve_outcome == 4 ~ 0.366,
+    mutate(point_probability = case_when(pass_outcome == 0 ~ 1,
+                                         pass_outcome == 1 ~ 0.614,
+                                         pass_outcome == 2 ~ 0.473,
+                                         pass_outcome == 3 ~ 0.329,
+                                         pass_outcome == 4 ~ 0.366,
                                          TRUE ~ 0)
     )
   
@@ -113,14 +113,14 @@ server <- function(input, output) {
   avg_pp_data_reactive <- reactive({
     req(input$server)
     req(input$serve_type)
-    req(input$serve_to)
-    req(input$serve_from)
+    req(input$reciever_position)
+    req(input$server_position)
     avg_pp_data <- 
       pp_data %>% 
       filter(serve_type == input$serve_type,
              server == input$server,
-             server_to %in% input$serve_to,
-             serve_from %in% input$serve_from) %>% 
+             server_to %in% input$reciever_position,
+             server_position %in% input$server_position) %>% 
       group_by(serve_speed) %>% 
       summarize(avg_prob = mean(point_probability),
                 avg_err_perc = sum(point_probability == 0)/n(),
@@ -210,14 +210,14 @@ server <- function(input, output) {
   sample_size_table_reactive <- reactive({
     req(input$server)
     req(input$serve_type)
-    req(input$serve_to)
-    req(input$serve_from)
+    req(input$reciever_position)
+    req(input$server_position)
     sample_size_table <- 
       pp_data %>% 
       filter(serve_type %in% input$serve_type,
              server == input$server,
-             server_to %in% input$serve_to,
-             serve_from %in% input$serve_from) %>% 
+             server_to %in% input$reciever_position,
+             server_position %in% input$server_position) %>% 
       group_by(serve_speed) %>% 
       summarize(sample_size = n())
   })
