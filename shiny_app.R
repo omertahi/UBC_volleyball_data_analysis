@@ -87,7 +87,7 @@ server <- function(input, output) {
                                 sheet = "Consolidated Data")[-1,] %>% 
     mutate(date = as.Date(as.numeric(date),
                           origin="1899-12-30"),
-           serve_type = gsub("_", " ", volleyball_data$serve_type))
+           serve_type = gsub("_", " ", .$serve_type))
     
   # combine cut-spin and spin as spin in the serve_type column
   `%notin%` <- Negate(`%in%`)
