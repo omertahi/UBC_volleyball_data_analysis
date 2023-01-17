@@ -105,10 +105,10 @@ server <- function(input, output) {
   pp_data <- 
     data %>% 
     mutate(point_probability = case_when(pass_outcome == 0 ~ 1,
-                                         pass_outcome == 1 ~ 0.614,
-                                         pass_outcome == 2 ~ 0.473,
-                                         pass_outcome == 3 ~ 0.329,
-                                         pass_outcome == 4 ~ 0.366,
+                                         pass_outcome == 1 ~ 0.640,
+                                         pass_outcome == 2 ~ 0.416,
+                                         pass_outcome == 3 ~ 0.382,
+                                         pass_outcome == 4 ~ 0.324,
                                          TRUE ~ 0)
     )
   
