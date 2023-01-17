@@ -97,7 +97,7 @@ server <- function(input, output) {
     mutate(serve_type = replace(volleyball_data$serve_type,
                                 volleyball_data$serve_type == "Cut Spin",
                                 "Spin"),
-           across(.cols = c(server_position, serve_speed), as.numeric)) %>% 
+           across(.cols = c(server, server_position, serve_speed), as.numeric)) %>% 
     filter(!is.na(server),
            server %notin% c(0, 99))
   
