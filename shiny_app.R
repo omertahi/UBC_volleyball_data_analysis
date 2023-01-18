@@ -84,7 +84,7 @@ server <- function(input, output) {
   # read data
   volleyball_data <- 
     read_excel("UBC volleyball data input.xlsx",
-                                sheet = "Consolidated Data")[-1,] %>% 
+                                sheet = "Consolidated Data") %>% 
     mutate(date = as.Date(as.numeric(date),
                           origin="1899-12-30"),
            serve_type = gsub("_", " ", .$serve_type))
