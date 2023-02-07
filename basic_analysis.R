@@ -6,7 +6,7 @@ library(ggspectra)
 #-----------------------------------------------------------------------------#
 
 # read data ------------------------------------------------------------------#
-volleyball_data <- read_excel("SAMPLE DATA BAD.xlsx")
+volleyball_data <- read_csv(".xlsx")
 #-----------------------------------------------------------------------------#
 
 # combine cut-spin and spin as spin in the serve_type column -----------------#
