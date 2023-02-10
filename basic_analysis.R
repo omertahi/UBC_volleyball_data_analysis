@@ -160,3 +160,30 @@ optimal_serve_velocity_table <-
 # grid.table(optimal_serve_velocity_table)
 # dev.off()
 #-----------------------------------------------------------------------------#
+
+
+# earn_percentage of server #7 based on where he serves to  ------------------#
+prop_points_won <- 
+  data %>% 
+  filter(server == 7,
+         !is.na(passer_position)) %>% 
+  group_by(passer_position) %>% 
+  summarise(earn_percentage = sum(point_outcome)/n())
+
+view(prop_points_won)
+
+
+## check counts of each position served to
+t <- data %>% 
+  filter(server == 7) %>% 
+  group_by(passer_position) %>% 
+  summarise(count = n())
+
+view(t)
+
+## Notes: 
+## - Too many NA values in point_outcome column preventing proper calculations
+## - passer_position has null and NA values. Should they be merged?
+
+#-----------------------------------------------------------------------------#
+
