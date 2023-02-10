@@ -85,9 +85,7 @@ server <- function(input, output) {
   volleyball_data <- 
     read_excel("UBC volleyball data input.xlsx",
                                 sheet = "Consolidated Data") %>% 
-    mutate(date = as.Date(as.numeric(date),
-                          origin="1899-12-30"),
-           serve_type = gsub("_", " ", .$serve_type))
+    mutate(serve_type = gsub("_", " ", .$serve_type))
     
   # combine cut-spin and spin as spin in the serve_type column
   `%notin%` <- Negate(`%in%`)

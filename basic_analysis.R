@@ -6,7 +6,11 @@ library(ggspectra)
 #-----------------------------------------------------------------------------#
 
 # read data ------------------------------------------------------------------#
-volleyball_data <- read_csv(".xlsx")
+volleyball_data <- 
+  read_excel("UBC volleyball data input.xlsx",
+             sheet = "Consolidated Data") %>% 
+  mutate(serve_type = gsub("_", " ", .$serve_type))
+
 #-----------------------------------------------------------------------------#
 
 # combine cut-spin and spin as spin in the serve_type column -----------------#
@@ -15,11 +19,12 @@ volleyball_data <- read_csv(".xlsx")
 data <- 
   volleyball_data %>% 
   mutate(serve_type = replace(volleyball_data$serve_type,
-                              volleyball_data$serve_type == "cut_spin",
-                              "spin"),
-         server = as.numeric(server)) %>% 
+                              volleyball_data$serve_type == "Cut Spin",
+                              "Spin"),
+         across(.cols = c(server, server_position, serve_speed), as.numeric)) %>% 
   filter(!is.na(server),
-         server %notin% c(0, 4, 99, 19))
+         !is.na(serve_speed),
+         server %notin% c(0, 99))
 #-----------------------------------------------------------------------------#
 
 # check counts of each serve_type --------------------------------------------#
@@ -34,7 +39,7 @@ main_serve_type <-
   data %>%
   group_by(server, serve_type) %>% 
   summarise(n = n(),
-            error_perc = sum(is.na(serve_outcome))/n) %>% 
+            error_perc = sum(pass_outcome == "E")/n) %>% 
   group_by(server) %>% 
   slice_max(order_by = n)
 #-----------------------------------------------------------------------------#
@@ -47,64 +52,70 @@ main_serve_type_data <-
 #-----------------------------------------------------------------------------#
 
 # create new column to assign probabilities for each serve outcome -----------#
-point_prob_data <- 
-  main_serve_type_data %>%
-  mutate(point_probability = case_when(serve_outcome == 0 ~ 1,
-                                       serve_outcome == 1 ~ 0.614,
-                                       serve_outcome == 2 ~ 0.473,
-                                       serve_outcome == 3 ~ 0.329,
-                                       serve_outcome == 4 ~ 0.366,
+pp_data <- 
+  data %>% 
+  mutate(point_probability = case_when(pass_outcome == 0 ~ 1,
+                                       pass_outcome == 1 ~ 0.640,
+                                       pass_outcome == 2 ~ 0.416,
+                                       pass_outcome == 3 ~ 0.382,
+                                       pass_outcome == 4 ~ 0.324,
                                        TRUE ~ 0)
   )
 #-----------------------------------------------------------------------------#
 
 # calculate average point scoring probability and ----------------------------#
 # average error percentage for each serve speed per player -------------------#
-avg_point_prob_data <- 
-  point_prob_data %>%
-  group_by(server, serve_speed) %>% 
-  summarize(avg_prob = mean(point_probability),
-            avg_err_perc = sum(point_probability == 0)/n(),
-            avg_ace_perc = sum(point_probability == 1)/n()) %>% 
-  arrange(server)
+# calculate average point scoring probability and
+# average error percentage for each serve speed per player
+avg_pp_data <-
+  pp_data %>%
+  group_by(server, serve_speed) %>%
+  summarize(
+    avg_prob = mean(point_probability),
+    avg_err_perc = sum(point_probability == 0) / n(),
+    avg_ace_perc = sum(point_probability == 1) / n()
+  )
 #-----------------------------------------------------------------------------#
 
 # perform k-smoothing on serve_speed vs avg_prob & error_perc ----------------#
-ksmooth_values <- 
-  avg_point_prob_data %>%
+## perform k-smoothing
+ksmoothed_data <-
+  avg_pp_data %>%
   group_by(server) %>% 
-  summarize(ksmooth_point_prob = list(ksmooth(x = serve_speed,
-                                              y = avg_prob,
-                                              kernel = "normal",
-                                              bandwidth = 7,
-                                              n.points = n())), 
-            ksmooth_error_perc = list(ksmooth(x = serve_speed,
-                                              y = avg_err_perc,
-                                              kernel = "normal",
-                                              bandwidth = 7,
-                                              n.points = n())),
-            ksmooth_ace_perc = list(ksmooth(x = serve_speed,
-                                            y = avg_ace_perc,
-                                            kernel = "normal",
-                                            bandwidth = 7,
-                                            n.points = n()))
-  ) %>% 
+  summarize(
+    ksmooth_point_prob = list(ksmooth(x = serve_speed,
+                                      y = avg_prob,
+                                      kernel = "normal",
+                                      bandwidth = 7,
+                                      n.points = n())),
+    ksmooth_error_perc = list(ksmooth(x = serve_speed,
+                                      y = avg_err_perc,
+                                      kernel = "normal",
+                                      bandwidth = 7,
+                                      n.points = n())),
+    ksmooth_ace_perc = list(ksmooth(x = serve_speed,
+                                    y = avg_ace_perc,
+                                    kernel = "normal",
+                                    bandwidth = 7,
+                                    n.points = n()))) %>%
   unnest_wider(col = c(ksmooth_point_prob,
                        ksmooth_error_perc,
                        ksmooth_ace_perc),
-               names_sep = "") %>% 
-  unnest(col = -server) %>% 
-  select(-4, -6) %>% 
-  setNames(., c("server",
-                "serve_velocity",
-                "point_prob",
-                "error_perc",
-                "ace_perc")) 
+               names_sep = "") %>%
+  unnest(cols = everything()) %>%
+  select(-c("ksmooth_error_percx", "ksmooth_ace_percx")) %>%
+  setNames(., c("server", "serve_velocity", "point_prob", "error_perc", "ace_perc")) %>% 
+  pivot_longer(
+    cols = c(point_prob, error_perc, ace_perc),
+    names_to = "perc_type",
+    values_to = "percentage")
 #-----------------------------------------------------------------------------#
 
 # wrangle ksmooth data to obtain most optimal serve speeds for each server ---#
 top2_serve_velocity <- 
-  ksmooth_values %>% 
+  ksmoothed_data %>% 
+  pivot_wider(names_from = perc_type,
+              values_from = percentage) %>% 
   select(server, serve_velocity, point_prob) %>% 
   group_by(server) %>% 
   slice_max(order_by = point_prob, n = 2)
