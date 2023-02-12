@@ -186,4 +186,17 @@ view(t)
 ## - passer_position has null and NA values. Should they be merged?
 
 #-----------------------------------------------------------------------------#
-
+library(MASS)
+roster_number = 7
+point_data <- volleyball_data %>% drop_na(point_outcome)
+point_data$server_to<- as.factor(point_data$server_position)
+# 
+# 
+full_logistic <- point_data  %>%
+  mutate(pass_outcome = coalesce(pass_outcome, "err")) 
+# 
+# 
+all_player_logistic <- glm(point_outcome ~ server_position + reciever_position + serve_speed + passer_position+ passer_hands_arms , data=  full_logistic, family= binomial)
+summary(all_player_logistic)
+full_backwards <- all_player_logistic %>% stepAIC(trace= FALSE)
+coef(full_backwards)
