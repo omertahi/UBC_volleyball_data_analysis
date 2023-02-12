@@ -26,7 +26,11 @@ library(ggspectra)
 #-----------------------------------------------------------------------------#
 
 # read data ------------------------------------------------------------------#
-volleyball_data <- read_excel("SAMPLE DATA- TWU FRI.xlsx")
+volleyball_data <-  read_excel("UBC volleyball data input.xlsx",
+                                sheet = "Consolidated Data") %>% 
+    mutate(date = as.Date(as.numeric(date),
+                          origin="1899-12-30"),
+           serve_type = gsub("_", " ", .$serve_type))
 #-----------------------------------------------------------------------------#
 
 # combine cut-spin and spin as spin in the serve_type column -----------------#
@@ -216,19 +220,17 @@ main_plot +
 ```
 
 ```{r logistic_regression}
-# library(MASS)
-# roster_number = 2
-# point_data <- volleyball_data %>% drop_na(point_outcome)
-# point_data$server_to<- as.factor(point_data$server_to)
-# point_data$serve_tape<- as.factor(point_data$serve_tape)
-# point_data$serve_outcome<- as.factor(point_data$serve_outcome)
+ library(MASS)
+roster_number = 7
+point_data <- volleyball_data %>% drop_na(point_outcome)
+point_data$server_to<- as.factor(point_data$server_to)
 # 
 # 
-# full_logistic <- point_data  %>%
-# mutate(serve_outcome = coalesce(serve_outcome, "err")) 
+ full_logistic <- point_data  %>%
+ mutate(serve_outcome = coalesce(serve_outcome, "err")) 
 # 
 # 
-# all_player_logistic <- glm(point_outcome ~ server_to + serve_type + server_to*passer_position + passer_position + serve_tape+serve_speed+serve_outcome+ seam_positioning, data=  full_logistic, family= binomial)
+ all_player_logistic <- glm(point_outcome ~ server_to + serve_type + server_to*passer_position + passer_position + serve_tape+serve_speed+serve_outcome+ seam_positioning, data=  full_logistic, family= binomial)
 # 
 # summary(all_player_logistic)
 # #full_backwards <- all_player_logistic %>% stepAIC(trace= FALSE)
