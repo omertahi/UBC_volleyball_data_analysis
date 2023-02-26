@@ -185,7 +185,7 @@ server <- function(input, output) {
                                      "Error Percentage",
                                      "Earn Percentage")) +
       theme_bw() + 
-      theme(legend.position = c(0.255, 0.970),
+      theme(legend.position = c(0.5, 1),
             legend.key.size = unit(0.25, "cm"),
             legend.direction="horizontal",
             legend.background = element_rect(colour = '#002145', fill = 'white', linetype = 'solid'),
