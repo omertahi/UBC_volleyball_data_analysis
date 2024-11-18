@@ -2,4 +2,4 @@
 
 ## Authors: Lucas Crichton, Omer Tahir
 
-### Description: This is a personal project dedicated to help the UBC voleyball team with its data analysis. 
+### Description: This is a personal project dedicated to help the UBC volleyball team with its data analysis. 
